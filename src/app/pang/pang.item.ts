@@ -1,10 +1,14 @@
 class PangItem {
-  private position: PIXI.Point;
   private itemObj: PIXI.Sprite;
+  private position: PIXI.Point;
   private itemType: string;
 
   constructor(itemObj: PIXI.Sprite) {
     this.itemObj = itemObj;
+  }
+
+  getItemObj(): PIXI.Sprite {
+    return this.itemObj;
   }
 
   setItemPosition(): void {

@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 
 import '../../vend/pixi.js';
+import './pang.item';
 import { ROW, COL } from './pang.config';
 import { Observable } from 'rxjs';
 
@@ -18,7 +19,7 @@ export class PangComponent implements OnInit {
     private con: PIXI.Container;
 
     private itemArray = new Array();
-    private gameMap = new Map<number, {}>();
+    private gameMap = new Map<number, PangItem>();
 
     constructor() {
         this.stage = new PIXI.Container();
@@ -68,7 +69,6 @@ export class PangComponent implements OnInit {
     }
 
     addItem(itemKey: number): void {
-        let tempItem = new PangItem();
         let randomIdx = Math.floor(Math.random() * 5);
         let itemValue = this.itemArray[randomIdx];
         let item = new PIXI.Sprite(PIXI.loader.resources[this.itemArray[randomIdx]].texture);
@@ -88,15 +88,17 @@ export class PangComponent implements OnInit {
             .on('touchstart', () => this.clickItem(itemKey));
 
         this.con.addChild(item);
-        this.gameMap.set(itemKey, item);
+        let tempItem = new PangItem(item);
+
+        this.gameMap.set(itemKey, tempItem);
 
         this.render();
     }
 
     clickItem(itemKey: number): void {
-        let item = this.gameMap.get(itemKey);
+        let item = this.gameMap.get(itemKey).getItemObj();
         let sel = new PIXI.Sprite(PIXI.loader.resources['s'].texture);
-        // sel.position = 
+        sel.position = this.gameMap.get(itemKey).getPosition();
         sel.scale.x = 2;
         sel.scale.y = 2;
 
@@ -109,7 +111,7 @@ export class PangComponent implements OnInit {
     }
 
     removeItem(itemKey: number): void {
-        this.gameMap.get(itemKey).destroy();
+        this.gameMap.get(itemKey).getItemObj().destroy();
         this.addItem(itemKey);
         // this.setGameItems();
     }
