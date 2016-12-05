@@ -1,4 +1,4 @@
-class PangItem {
+export class PangItem {
   private itemObj: PIXI.Sprite;
   private position: PIXI.Point;
   private itemType: string;

@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 
 import '../../vend/pixi.js';
-import './pang.item';
+import { PangItem } from './pang.item';
 import { ROW, COL } from './pang.config';
 import { Observable } from 'rxjs';
 
@@ -71,7 +71,7 @@ export class PangComponent implements OnInit {
     addItem(itemKey: number): void {
         let randomIdx = Math.floor(Math.random() * 5);
         let itemValue = this.itemArray[randomIdx];
-        let item = new PIXI.Sprite(PIXI.loader.resources[this.itemArray[randomIdx]].texture);
+        let item = new PIXI.Sprite(PIXI.loader.resources[itemValue].texture);
         let positionX = itemKey % COL * 80;
         let positionY = Math.floor(itemKey / ROW) * 80;
 
@@ -89,6 +89,8 @@ export class PangComponent implements OnInit {
 
         this.con.addChild(item);
         let tempItem = new PangItem(item);
+        tempItem.setPosition(item.position);
+        tempItem.setItemType(itemValue);
 
         this.gameMap.set(itemKey, tempItem);
 
