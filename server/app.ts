@@ -30,7 +30,7 @@ app.use('/api/user', userRouter);
   // in production mode run application from dist folder
   // app.use(express.static(path.join(__dirname, '/../client')));
   // app.use('/public', express.static(path.join(__dirname, '/../client')));
-  app.use(express.static(path.join(__dirname, '/../client/assets/')));
+  app.use(express.static(path.join(__dirname, '/../client')));
 // }
 
 // catch 404 and forward to error handler
