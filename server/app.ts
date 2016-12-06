@@ -28,7 +28,9 @@ app.use('/api/user', userRouter);
 // if (app.get('env') === 'production') {
 
   // in production mode run application from dist folder
-  app.use(express.static(path.join(__dirname, '/../client')));
+  // app.use(express.static(path.join(__dirname, '/../client')));
+  // app.use('/public', express.static(path.join(__dirname, '/../client')));
+  app.use(express.static(path.join(__dirname, '/../client/assets/')));
 // }
 
 // catch 404 and forward to error handler

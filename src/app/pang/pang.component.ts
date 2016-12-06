@@ -39,12 +39,12 @@ export class PangComponent implements OnInit {
         document.body.appendChild(this.renderer.view);
 
         PIXI.loader
-            .add('b', '../..//public/img/pang/element_blue_square.png')
-            .add('g', '../..//public/img/pang/element_green_square.png')
-            .add('p', '../..//public/img/pang/element_purple_square.png')
-            .add('r', '../..//public/img/pang/element_red_square.png')
-            .add('y', '../..//public/img/pang/element_yellow_square.png')
-            .add('s', '../..//public/img/pang/selectorC.png')
+            .add('b', '/assets/pang/element_blue_square.png')
+            .add('g', '/assets/pang/element_green_square.png')
+            .add('p', '/assets/pang/element_purple_square.png')
+            .add('r', '/assets/pang/element_red_square.png')
+            .add('y', '/assets/pang/element_yellow_square.png')
+            .add('s', '/assets/pang/selectorC.png')
             .load((loader, resources) => {
                 this.setGameItems();
                 this.render();
