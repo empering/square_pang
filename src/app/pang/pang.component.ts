@@ -2,7 +2,8 @@ import { Component, OnInit } from '@angular/core';
 
 import '../../vend/pixi.js';
 import { PangItem } from './pang.item';
-import { ROW, COL } from './pang.config';
+import { PangUtil } from './pang.util';
+import { ROW, ROW_SIZE, COL, COL_SIZE } from './pang.config';
 import { Observable } from 'rxjs';
 
 @Component({
@@ -20,6 +21,10 @@ export class PangComponent implements OnInit {
 
     private itemArray = new Array();
     private gameMap = new Map<number, PangItem>();
+    private selectedMap = new Map<number, PangItem>();
+    private selectMarkMap = new Map<number, PangItem>();
+
+    private util = new PangUtil();
 
     constructor() {
         this.stage = new PIXI.Container();
@@ -59,7 +64,7 @@ export class PangComponent implements OnInit {
     setGameItems(): void {
         for (let row = 0; row < ROW; row++) {
             for (let col = 0; col < COL; col++) {
-                let itemKey = row * COL + col;
+                let itemKey = row * 10 + col;
                 this.addItem(itemKey);
             }
         }
@@ -72,8 +77,10 @@ export class PangComponent implements OnInit {
         let randomIdx = Math.floor(Math.random() * 5);
         let itemValue = this.itemArray[randomIdx];
         let item = new PIXI.Sprite(PIXI.loader.resources[itemValue].texture);
-        let positionX = itemKey % COL * 80;
-        let positionY = Math.floor(itemKey / ROW) * 80;
+        let pointX = itemKey % 10;
+        let pointY = Math.floor(itemKey / 10);
+        let positionX = pointX * ROW_SIZE;
+        let positionY = pointY * COL_SIZE;
 
         item.position.x = positionX;
         item.position.y = positionY;
@@ -91,6 +98,7 @@ export class PangComponent implements OnInit {
         let tempItem = new PangItem(item);
         tempItem.setPosition(item.position);
         tempItem.setItemType(itemValue);
+        tempItem.setPoint({x: pointX, y: pointY});
 
         this.gameMap.set(itemKey, tempItem);
 
@@ -98,6 +106,28 @@ export class PangComponent implements OnInit {
     }
 
     clickItem(itemKey: number): void {
+        if (this.selectedMap.size > 1) {
+            return;
+        }
+
+        this.selectItem(itemKey);
+
+        if (this.selectedMap.size === 2) {
+            if (this.util.isNearItems(this.selectedMap)) {
+                this.swapItem();
+            }
+
+            this.clearSelectItemAll();
+        }
+        this.render();
+        // this.removeItem(itemKey);
+    }
+
+    swapItem(): void {
+        // swap 기능 개발
+    }
+
+    selectItem(itemKey: number): void {
         let item = this.gameMap.get(itemKey).getItemObj();
         let sel = new PIXI.Sprite(PIXI.loader.resources['s'].texture);
         sel.position = this.gameMap.get(itemKey).getPosition();
@@ -108,8 +138,32 @@ export class PangComponent implements OnInit {
 
         item.alpha = 0.5;
 
+        let selItem = new PangItem(sel);
+        selItem.setPosition(sel.position);
+        selItem.setItemType('s');
+        selItem.setPoint({x: sel.position.x, y: sel.position.y});
+
+        this.selectedMap.set(itemKey, this.gameMap.get(itemKey));
+        this.selectMarkMap.set(itemKey, selItem);
+
         this.render();
-        // this.removeItem(itemKey);
+    }
+
+    clearSelectItem(itemKey: number): void {
+        this.selectMarkMap.get(itemKey).getItemObj().destroy();
+        this.selectMarkMap.delete(itemKey);
+    }
+
+    clearSelectItemAll(): void {
+        this.selectMarkMap.forEach((item: PangItem) => {
+            item.getItemObj().destroy();
+        });
+        this.selectedMap.forEach((item: PangItem) => {
+            item.getItemObj().alpha = 1;
+        });
+
+        this.selectMarkMap.clear();
+        this.selectedMap.clear();
     }
 
     removeItem(itemKey: number): void {
