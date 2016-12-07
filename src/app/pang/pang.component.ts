@@ -125,6 +125,8 @@ export class PangComponent implements OnInit {
 
     swapItem(): void {
         // swap 기능 개발
+        this.util.swapItems(this.selectedMap);
+        this.render();
     }
 
     selectItem(itemKey: number): void {
