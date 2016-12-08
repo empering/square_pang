@@ -1,7 +1,7 @@
 <img width="150" src="https://i.cloudup.com/zfY6lL7eFa-3000x3000.png" />
 <img width="50" src="https://angular.io/resources/images/logos/angular2/angular.svg" />
 
-## Angular2 Express Starter ( Advanced )
+## Square PANG !!
 
 - Angular 2 ( 2.x )
 - ExpressJS ( 4.x - with compression )
@@ -12,9 +12,7 @@
 
 ## Concepts
 
-- Redux ( NgRx/Store - with server calls)
-- Smart & dumb components
-- Advanced routing ( lazy loading, router outlets...)
+- 망한거같다...
 
 ## Install / Development
 
