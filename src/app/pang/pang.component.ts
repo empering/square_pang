@@ -23,6 +23,7 @@ export class PangComponent implements OnInit {
     private gameMap = new Map<number, PangItem>();
     private selectedMap = new Map<number, PangItem>();
     private selectMarkMap = new Map<number, PangItem>();
+    private matchMap = new Map<number, PangItem>();
 
     private util = new PangUtil();
 
@@ -58,6 +59,12 @@ export class PangComponent implements OnInit {
 
     render(): void {
         // requestAnimationFrame(() => this.render());
+        this.matchMap = this.util.getMatchAllItems(this.gameMap);
+        this.matchMap.forEach((item) => {
+            item.getItemObj().destroy();
+        });
+        this.matchMap.clear();
+
         this.renderer.render(this.stage);
     }
 
@@ -102,11 +109,16 @@ export class PangComponent implements OnInit {
 
         this.gameMap.set(itemKey, tempItem);
 
-        this.render();
+        // this.render();
     }
 
     clickItem(itemKey: number): void {
         if (this.selectedMap.size > 1) {
+            return;
+        }
+
+        // 같은 아이템을 클릭할 경우
+        if (this.selectedMap.get(itemKey) !== undefined) {
             return;
         }
 
@@ -125,7 +137,7 @@ export class PangComponent implements OnInit {
 
     swapItem(): void {
         // swap 기능 개발
-        this.util.swapItems(this.selectedMap);
+        this.util.swapItems(this.selectedMap, this.gameMap);
         this.render();
     }
 

@@ -22,8 +22,8 @@ export class PangItem {
   setItemPosition(): void {
     this.position = new PIXI.Point(this.point.x * COL_SIZE, this.point.y * ROW_SIZE);
     this.itemObj.position = this.position;
-    console.log(this.position.x);
-    console.log(this.position.y);
+    // console.log(this.position.x);
+    // console.log(this.position.y);
     // this.point = {x: this.position.x, y: this.position.y};
   }
 
