@@ -105,7 +105,7 @@ export class PangComponent implements OnInit {
         let tempItem = new PangItem(item);
         tempItem.setPosition(item.position);
         tempItem.setItemType(itemValue);
-        tempItem.setPoint({x: pointX, y: pointY});
+        tempItem.setPoint({ x: pointX, y: pointY });
 
         this.gameMap.set(itemKey, tempItem);
 
@@ -155,7 +155,7 @@ export class PangComponent implements OnInit {
         let selItem = new PangItem(sel);
         selItem.setPosition(sel.position);
         selItem.setItemType('s');
-        selItem.setPoint({x: sel.position.x, y: sel.position.y});
+        selItem.setPoint({ x: sel.position.x, y: sel.position.y });
 
         this.selectedMap.set(itemKey, this.gameMap.get(itemKey));
         this.selectMarkMap.set(itemKey, selItem);
