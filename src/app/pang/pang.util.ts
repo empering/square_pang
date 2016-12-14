@@ -1,5 +1,6 @@
 import { PangItem } from './pang.item';
-import { ROW, ROW_SIZE, COL, COL_SIZE } from './pang.config';
+import { PangItemContainer } from './pang.item-container';
+import { ROW, COL, COL_SIZE } from './pang.config';
 
 export class PangUtil {
   isNearItem(item1: PangItem, item2: PangItem): boolean {
@@ -12,12 +13,12 @@ export class PangUtil {
     return flag;
   }
 
-  isNearItems(items: Map<number, PangItem>): boolean {
+  isNearItems(targetItems: PangItemContainer): boolean {
     let flag = false;
-    if (items.size === 2) {
-      let keys = items.keys();
-      let item1 = items.get(keys.next().value);
-      let item2 = items.get(keys.next().value);
+    if (targetItems.size() === 2) {
+      let items = targetItems.getItems();
+      let item1 = items[0];
+      let item2 = items[1];
       flag = this.isNearItem(item1, item2);
     } else {
       // alert('item size : ' + items.size);
@@ -25,60 +26,53 @@ export class PangUtil {
     return flag;
   }
 
-  swapItems(items: Map<number, PangItem>, allItems: Map<number, PangItem>): void {
-    let keys = items.keys();
-    let item1Key = keys.next().value;
-    let item2Key = keys.next().value;
+  swapItems(targetItems: PangItemContainer): void {
+    let items = targetItems.getItems();
 
-    let item1 = items.get(item1Key);
-    let item2 = items.get(item2Key);
+    let item1 = items[0];
+    let item2 = items[1];
 
-    // log positon
-    // console.log('item1 position : ' + item1.getItemObj().position.x + 'x' + item1.getItemObj().position.y);
-    // console.log(item1.getPoint());
-    // console.log('item2 position : ' + item2.getItemObj().position.x + 'x' + item2.getItemObj().position.y);
-    // console.log(item2.getPoint());
-
-    let temp = item1.getPoint();
-    item1.setPoint(item2.getPoint());
-    item2.setPoint(temp);
-
-    // allItems.set(item1Key, item2);
-    // allItems.set(item2Key, item1);
-
-    item1.setItemPosition();
-    item2.setItemPosition();
+    let temp = item1.getItemType();
+    item1.getItemObj().texture = PIXI.loader.resources[item2.getItemType()].texture;
+    item1.setItemType(item2.getItemType());
+    item2.getItemObj().texture = PIXI.loader.resources[temp].texture;
+    item2.setItemType(temp);
   }
 
-  getMatchAllItems(items: Map<number, PangItem>): Map<number, PangItem> {
-    let matchItems = new Map<number, PangItem>();
+  getMatchAllItems(items: PangItemContainer): PangItemContainer {
+    let matchItems = new PangItemContainer();
 
     for (let r = 0; r < ROW; r++) {
-      for (let c = 0; c < COL - 3; c++) {
-        let itemKey1 = r * 10 + c;
-        let itemKey2 = itemKey1 + 1;
-        let itemKey3 = itemKey1 + 2;
+      let tempItems = items.getItemsByPoint(-1, r, 'gt', 'eq');
+      let tempMatchItems = new PangItemContainer();
+      let matchCnt = { b: 0, g: 0, p: 0, r: 0, y: 0 };
+      let prevType = '';
+      tempItems.sort((a, b) => {
+        return a.getPointX() - b.getPointX();
+      });
 
-        let item1 = items.get(itemKey1);
-        let item2 = items.get(itemKey2);
-        let item3 = items.get(itemKey3);
-
-        if (item1.getItemType() === item2.getItemType() && item1.getItemType() === item3.getItemType()) {
-          matchItems.set(itemKey1, item1);
-          matchItems.set(itemKey2, item2);
-          matchItems.set(itemKey3, item3);
-          if (COL - 3 > c + 2) {
-            let itemKey4 = itemKey1 + 3;
-            let item4 = items.get(itemKey4);
-            if (item1.getItemType() === item4.getItemType()) {
-              matchItems.set(itemKey4, item4);
-            }
-          }
+      tempItems.forEach((item, i, tempItemsAll) => {
+        if (prevType === '') {
+          prevType = item.getItemType();
+          matchCnt[prevType]++;
+        } else if (prevType === item.getItemType()) {
+          matchCnt[prevType]++;
+        } else {
+          matchCnt[prevType] = 0;
+          prevType = item.getItemType();
+          matchCnt[prevType] = 1;
         }
 
-      }
+        if (matchCnt[prevType] === 3) {
+          tempMatchItems.addItem(tempItemsAll[i - 2]);
+          tempMatchItems.addItem(tempItemsAll[i - 1]);
+          tempMatchItems.addItem(item); // tempItemsAll[i]
+        } else if (matchCnt[prevType] > 3) {
+          tempMatchItems.addItem(item);
+        }
+      });
+      matchItems.addItems(tempMatchItems);
     }
-
     return matchItems;
   }
 }

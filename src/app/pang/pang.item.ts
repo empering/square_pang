@@ -1,4 +1,4 @@
-import { ROW, ROW_SIZE, COL, COL_SIZE } from './pang.config';
+import { ROW_SIZE, COL_SIZE } from './pang.config';
 
 interface Point {
   x: number;
@@ -13,6 +13,10 @@ export class PangItem {
 
   constructor(itemObj: PIXI.Sprite) {
     this.itemObj = itemObj;
+  }
+
+  getItemKey(): number {
+    return this.getPointY() * COL_SIZE + this.getPointX();
   }
 
   getItemObj(): PIXI.Sprite {

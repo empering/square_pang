@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 
 import '../../vend/pixi.js';
 import { PangItem } from './pang.item';
+import { PangItemContainer } from './pang.item-container';
 import { PangUtil } from './pang.util';
 import { ROW, ROW_SIZE, COL, COL_SIZE } from './pang.config';
 import { Observable } from 'rxjs';
@@ -20,10 +21,10 @@ export class PangComponent implements OnInit {
     private con: PIXI.Container;
 
     private itemArray = new Array();
-    private gameMap = new Map<number, PangItem>();
-    private selectedMap = new Map<number, PangItem>();
-    private selectMarkMap = new Map<number, PangItem>();
-    private matchMap = new Map<number, PangItem>();
+    private gameItems = new PangItemContainer();
+    private selectedItems = new PangItemContainer();
+    private selectMarks = new PangItemContainer();
+    private matchItems = new PangItemContainer();
 
     private util = new PangUtil();
 
@@ -57,37 +58,41 @@ export class PangComponent implements OnInit {
             });
     }
 
+    start(): void {
+        this.matchRemove();
+    }
+
     render(): void {
         // requestAnimationFrame(() => this.render());
-        this.matchMap = this.util.getMatchAllItems(this.gameMap);
-        this.matchMap.forEach((item) => {
-            item.getItemObj().destroy();
-        });
-        this.matchMap.clear();
-
         this.renderer.render(this.stage);
+    }
+
+    matchRemove(): void {
+        this.matchItems = this.util.getMatchAllItems(this.gameItems);
+        this.gameItems.removeItemsByContainer(this.matchItems);
+        // this.gameItems.padItems(this.matchItems);
+        this.matchItems.destroy();
+        this.render();
     }
 
     setGameItems(): void {
         for (let row = 0; row < ROW; row++) {
             for (let col = 0; col < COL; col++) {
-                let itemKey = row * 10 + col;
-                this.addItem(itemKey);
+                this.addItem(col, row);
             }
         }
 
+        this.gameItems.sort();
         this.con.position.x = 4;
         this.con.position.y = 4;
     }
 
-    addItem(itemKey: number): void {
+    addItem(pointX: number, pointY: number): void {
         let randomIdx = Math.floor(Math.random() * 5);
         let itemValue = this.itemArray[randomIdx];
         let item = new PIXI.Sprite(PIXI.loader.resources[itemValue].texture);
-        let pointX = itemKey % 10;
-        let pointY = Math.floor(itemKey / 10);
-        let positionX = pointX * ROW_SIZE;
-        let positionY = pointY * COL_SIZE;
+        let positionX = pointX * COL_SIZE;
+        let positionY = pointY * ROW_SIZE;
 
         item.position.x = positionX;
         item.position.y = positionY;
@@ -98,8 +103,8 @@ export class PangComponent implements OnInit {
         item.buttonMode = true;
         item.interactive = true;
 
-        item.on('mousedown', () => this.clickItem(itemKey))
-            .on('touchstart', () => this.clickItem(itemKey));
+        item.on('mousedown', () => this.clickItem(pointX, pointY))
+            .on('touchstart', () => this.clickItem(pointX, pointY));
 
         this.con.addChild(item);
         let tempItem = new PangItem(item);
@@ -107,28 +112,28 @@ export class PangComponent implements OnInit {
         tempItem.setItemType(itemValue);
         tempItem.setPoint({ x: pointX, y: pointY });
 
-        this.gameMap.set(itemKey, tempItem);
-
-        // this.render();
+        this.gameItems.addItem(tempItem);
     }
 
-    clickItem(itemKey: number): void {
-        if (this.selectedMap.size > 1) {
+    clickItem(pointX: number, pointY: number): void {
+        // console.log('click : ' + pointX + ' : ' + pointY + ' : size : ' + this.selectedItems.size());
+        if (this.selectedItems.size() > 1) {
             return;
         }
 
         // 같은 아이템을 클릭할 경우
-        if (this.selectedMap.get(itemKey) !== undefined) {
+        if (this.selectedItems.size() === 1 && this.selectedItems.getItemByPoint(pointX, pointY) !== null) {
+            console.log('equals');
             return;
         }
 
-        this.selectItem(itemKey);
+        this.selectItem(pointX, pointY);
 
-        if (this.selectedMap.size === 2) {
-            if (this.util.isNearItems(this.selectedMap)) {
+        if (this.selectedItems.size() === 2) {
+            if (this.util.isNearItems(this.selectedItems)) {
                 this.swapItem();
+                this.matchRemove();
             }
-
             this.clearSelectItemAll();
         }
         this.render();
@@ -137,52 +142,37 @@ export class PangComponent implements OnInit {
 
     swapItem(): void {
         // swap 기능 개발
-        this.util.swapItems(this.selectedMap, this.gameMap);
-        this.render();
+        this.util.swapItems(this.selectedItems);
     }
 
-    selectItem(itemKey: number): void {
-        let item = this.gameMap.get(itemKey).getItemObj();
+    selectItem(pointX: number, pointY: number): void {
+        console.log('selected : ' + pointX + ' : ' + pointY);
         let sel = new PIXI.Sprite(PIXI.loader.resources['s'].texture);
-        sel.position = this.gameMap.get(itemKey).getPosition();
+        let item = this.gameItems.getItemByPoint(pointX, pointY);
+        console.log(item.getPointX() + ' : ' + item.getPointY());
+        sel.position = item.getPosition();
         sel.scale.x = 2;
         sel.scale.y = 2;
 
         this.con.addChild(sel);
 
-        item.alpha = 0.5;
+        item.getItemObj().alpha = 0.5;
 
         let selItem = new PangItem(sel);
         selItem.setPosition(sel.position);
         selItem.setItemType('s');
         selItem.setPoint({ x: sel.position.x, y: sel.position.y });
 
-        this.selectedMap.set(itemKey, this.gameMap.get(itemKey));
-        this.selectMarkMap.set(itemKey, selItem);
-
-        this.render();
-    }
-
-    clearSelectItem(itemKey: number): void {
-        this.selectMarkMap.get(itemKey).getItemObj().destroy();
-        this.selectMarkMap.delete(itemKey);
+        this.selectedItems.addItem(item);
+        this.selectMarks.addItem(selItem);
     }
 
     clearSelectItemAll(): void {
-        this.selectMarkMap.forEach((item: PangItem) => {
-            item.getItemObj().destroy();
-        });
-        this.selectedMap.forEach((item: PangItem) => {
+        this.selectMarks.destroy();
+        this.selectedItems.getItems().forEach((item: PangItem) => {
             item.getItemObj().alpha = 1;
         });
 
-        this.selectMarkMap.clear();
-        this.selectedMap.clear();
-    }
-
-    removeItem(itemKey: number): void {
-        this.gameMap.get(itemKey).getItemObj().destroy();
-        this.addItem(itemKey);
-        // this.setGameItems();
+        this.selectedItems.clear();
     }
 }
