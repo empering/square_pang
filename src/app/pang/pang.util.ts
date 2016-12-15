@@ -1,8 +1,35 @@
 import { PangItem } from './pang.item';
 import { PangItemContainer } from './pang.item-container';
-import { ROW, COL, COL_SIZE } from './pang.config';
+import { ROW, COL, ROW_SIZE, COL_SIZE, ITEM_ARRAY } from './pang.config';
 
 export class PangUtil {
+  createItem(pointX: number, pointY: number, type: string): PangItem {
+    if (type === 'r') {
+      type = this.makeRandomTexture();
+    }
+    let item = new PIXI.Sprite(PIXI.loader.resources[type].texture);
+    let positionX = pointX * COL_SIZE;
+    let positionY = pointY * ROW_SIZE;
+
+    item.position.x = positionX;
+    item.position.y = positionY;
+
+    item.scale.x = 2;
+    item.scale.y = 2;
+
+    let tempItem = new PangItem(item);
+    tempItem.setPosition(item.position);
+    tempItem.setItemType(type);
+    tempItem.setPoint({ x: pointX, y: pointY });
+
+    return tempItem;
+  }
+
+  makeRandomTexture(): string {
+    let randomIdx = Math.floor(Math.random() * 5);
+    return ITEM_ARRAY[randomIdx];
+  }
+
   isNearItem(item1: PangItem, item2: PangItem): boolean {
     let flag = false;
     if (item1.getPointX() === item2.getPointX() && Math.abs(item1.getPointY() - item2.getPointY()) === 1) {
@@ -20,23 +47,30 @@ export class PangUtil {
       let item1 = items[0];
       let item2 = items[1];
       flag = this.isNearItem(item1, item2);
-    } else {
-      // alert('item size : ' + items.size);
     }
     return flag;
   }
 
   swapItems(targetItems: PangItemContainer): void {
     let items = targetItems.getItems();
+    this.swapItem(items[0], items[1]);
+  }
 
-    let item1 = items[0];
-    let item2 = items[1];
-
+  swapItem(item1: PangItem, item2: PangItem): void {
     let temp = item1.getItemType();
     item1.getItemObj().texture = PIXI.loader.resources[item2.getItemType()].texture;
     item1.setItemType(item2.getItemType());
     item2.getItemObj().texture = PIXI.loader.resources[temp].texture;
     item2.setItemType(temp);
+  }
+
+  setEmpty(targetItems: PangItemContainer): void {
+    let items = targetItems.getItems();
+
+    items.forEach((item) => {
+      item.getItemObj().texture = PIXI.loader.resources['e'].texture;
+      item.setItemType('e');
+    });
   }
 
   getMatchAllItemsX(items: PangItemContainer): PangItemContainer {

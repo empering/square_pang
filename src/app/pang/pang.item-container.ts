@@ -1,21 +1,19 @@
 import { PangItem } from './pang.item';
+import { PangUtil } from './pang.util';
 
 export class PangItemContainer {
-  // private itemMap: Map<number, PangItem>;
   private items: PangItem[];
+  private util = new PangUtil();
 
   constructor() {
-    // this.itemMap = new Map<number, PangItem>();
     this.items = new Array();
   }
 
   addItem(item: PangItem): void {
-    // this.itemMap.set(itemKey, item);
     this.items.push(item);
   }
 
   addItems(itemsContainer: PangItemContainer): void {
-    // this.items.concat(itemsContainer.getItems()); // ???
     itemsContainer.getItems().forEach((item) => {
       this.addItem(item);
     });
@@ -29,13 +27,11 @@ export class PangItemContainer {
   }
 
   clear(): void {
-    // this.itemMap.clear();
     this.items.splice(0);
   }
 
   destroy(): void {
     this.items.forEach((item) => {
-      // console.log('destroy : ' + item.getItemType() + ' : ' + item.getPointX() + ' : ' + item.getPointY());
       item.getItemObj().destroy();
     });
     this.clear();
@@ -71,23 +67,38 @@ export class PangItemContainer {
     items.sort((a, b) => {
       return b.getPointY() - a.getPointY();
     });
-    items.forEach((item) => {
-      console.log('fill target item point : ' + item.getPointX() + ' : ' + item.getPointY());
-      item.getItemObj().alpha = 0.5;
-      if (item.getPointY() === y) {
-        console.log('start item pass!');
-      } else {
-        console.log('swap item');
-      }
-    });
+
+    for (let i = 1; i < items.length; i++) {
+      this.util.swapItem(items[i - 1], items[i]);
+    }
+
+    // items.forEach((item) => {
+    //   console.log('fill target item point : ' + item.getPointX() + ' : ' + item.getPointY());
+    //   item.getItemObj().alpha = 0.5;
+    //   if (item.getPointY() === y) {
+    //     console.log('start item pass!');
+    //   } else {
+    //     console.log('swap item');
+    //   }
+    // });
   }
 
   fillItems(itemContainer: PangItemContainer) {
     itemContainer.getItems().forEach((item) => {
-      console.log('target item point : ' + item.getPointX() + ' : ' + item.getPointY());
+      // console.log('target item point : ' + item.getPointX() + ' : ' + item.getPointY());
       this.fillItemY(item.getPointX(), item.getPointY());
     });
   }
+
+  setFullFill() {
+    this.items.forEach((item) => {
+      if (item.getItemType() === 'e') {
+        let type = this.util.makeRandomTexture();
+        item.getItemObj().texture = PIXI.loader.resources[type].texture;
+        item.setItemType(type);
+      }
+    });
+  };
 
   getItems(): PangItem[] {
     return this.items;
