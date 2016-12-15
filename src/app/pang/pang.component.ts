@@ -24,7 +24,8 @@ export class PangComponent implements OnInit {
     private gameItems = new PangItemContainer();
     private selectedItems = new PangItemContainer();
     private selectMarks = new PangItemContainer();
-    private matchItems = new PangItemContainer();
+    private matchItemsX = new PangItemContainer();
+    private matchItemsY = new PangItemContainer();
 
     private util = new PangUtil();
 
@@ -62,16 +63,31 @@ export class PangComponent implements OnInit {
         this.matchRemove();
     }
 
+    reset(): void {
+        this.gameItems.destroy();
+
+        this.setGameItems();
+        this.render();
+    }
+
     render(): void {
         // requestAnimationFrame(() => this.render());
         this.renderer.render(this.stage);
     }
 
     matchRemove(): void {
-        this.matchItems = this.util.getMatchAllItems(this.gameItems);
-        this.gameItems.removeItemsByContainer(this.matchItems);
-        // this.gameItems.padItems(this.matchItems);
-        this.matchItems.destroy();
+        this.matchItemsX = this.util.getMatchAllItemsX(this.gameItems);
+        // remove 대신 blank 이미지로 교체하는 형태로 변경
+        this.gameItems.removeItemsByContainer(this.matchItemsX);
+        // fill function
+        this.gameItems.fillItems(this.matchItemsX);
+        this.matchItemsX.destroy();
+
+        // this.matchItemsY = this.util.getMatchAllItemsY(this.gameItems);
+        // this.gameItems.removeItemsByContainer(this.matchItemsY);
+        // // fill function
+        // this.matchItemsY.destroy();
+
         this.render();
     }
 

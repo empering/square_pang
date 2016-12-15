@@ -39,16 +39,53 @@ export class PangUtil {
     item2.setItemType(temp);
   }
 
-  getMatchAllItems(items: PangItemContainer): PangItemContainer {
+  getMatchAllItemsX(items: PangItemContainer): PangItemContainer {
     let matchItems = new PangItemContainer();
 
-    for (let r = 0; r < ROW; r++) {
+    for (let r = ROW - 1; r >= 0; r--) {
       let tempItems = items.getItemsByPoint(-1, r, 'gt', 'eq');
       let tempMatchItems = new PangItemContainer();
       let matchCnt = { b: 0, g: 0, p: 0, r: 0, y: 0 };
       let prevType = '';
       tempItems.sort((a, b) => {
         return a.getPointX() - b.getPointX();
+      });
+
+      tempItems.forEach((item, i, tempItemsAll) => {
+        if (prevType === '') {
+          prevType = item.getItemType();
+          matchCnt[prevType]++;
+        } else if (prevType === item.getItemType()) {
+          matchCnt[prevType]++;
+        } else {
+          matchCnt[prevType] = 0;
+          prevType = item.getItemType();
+          matchCnt[prevType] = 1;
+        }
+
+        if (matchCnt[prevType] === 3) {
+          tempMatchItems.addItem(tempItemsAll[i - 2]);
+          tempMatchItems.addItem(tempItemsAll[i - 1]);
+          tempMatchItems.addItem(item); // tempItemsAll[i]
+        } else if (matchCnt[prevType] > 3) {
+          tempMatchItems.addItem(item);
+        }
+      });
+      matchItems.addItems(tempMatchItems);
+    }
+    return matchItems;
+  }
+
+  getMatchAllItemsY(items: PangItemContainer): PangItemContainer {
+    let matchItems = new PangItemContainer();
+
+    for (let c = 0; c < COL; c++) {
+      let tempItems = items.getItemsByPoint(c, -1, 'eq', 'gt');
+      let tempMatchItems = new PangItemContainer();
+      let matchCnt = { b: 0, g: 0, p: 0, r: 0, y: 0 };
+      let prevType = '';
+      tempItems.sort((a, b) => {
+        return b.getPointY() - a.getPointY();
       });
 
       tempItems.forEach((item, i, tempItemsAll) => {

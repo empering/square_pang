@@ -64,13 +64,28 @@ export class PangItemContainer {
     });
   }
 
-  fillItemsY(x: number, y: number): void {
+  fillItemY(x: number, y: number): void {
+    let startItem = this.getItemByPoint(x, y);
     let items = this.getItemsByPoint(x, y, 'eq', 'lt');
+    items.push(startItem);
+    items.sort((a, b) => {
+      return b.getPointY() - a.getPointY();
+    });
+    items.forEach((item) => {
+      console.log('fill target item point : ' + item.getPointX() + ' : ' + item.getPointY());
+      item.getItemObj().alpha = 0.5;
+      if (item.getPointY() === y) {
+        console.log('start item pass!');
+      } else {
+        console.log('swap item');
+      }
+    });
   }
 
   fillItems(itemContainer: PangItemContainer) {
     itemContainer.getItems().forEach((item) => {
-      this.fillItemsY(item.getPointX(), item.getPointY());
+      console.log('target item point : ' + item.getPointX() + ' : ' + item.getPointY());
+      this.fillItemY(item.getPointX(), item.getPointY());
     });
   }
 
