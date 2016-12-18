@@ -3,19 +3,33 @@ import { PangItemContainer } from './pang.item-container';
 import { ROW, COL, ROW_SIZE, COL_SIZE, ITEM_ARRAY } from './pang.config';
 
 export class PangUtil {
+  private device = 'p';
+  private scale = 2;
+  private startTime = 0;
+
+  setDevice(device: string): void {
+    this.device = device;
+    if (device === 'm') {
+      this.scale = 1;
+    }
+  }
+
   createItem(pointX: number, pointY: number, type: string): PangItem {
     if (type === 'r') {
       type = this.makeRandomTexture();
     }
     let item = new PIXI.Sprite(PIXI.loader.resources[type].texture);
-    let positionX = pointX * COL_SIZE;
-    let positionY = pointY * ROW_SIZE;
+    let positionX = pointX * COL_SIZE * this.scale;
+    let positionY = pointY * ROW_SIZE * this.scale;
 
     item.position.x = positionX;
     item.position.y = positionY;
 
-    item.scale.x = 2;
-    item.scale.y = 2;
+    item.scale.x = this.scale;
+    item.scale.y = this.scale;
+
+    item.anchor.x = 0.5;
+    item.anchor.y = 0.5;
 
     let tempItem = new PangItem(item);
     tempItem.setPosition(item.position);
@@ -64,10 +78,18 @@ export class PangUtil {
     item2.setItemType(temp);
   }
 
+  removeAni(items: PangItem[], duration: number): boolean {
+    return true;
+  }
+
   setEmpty(targetItems: PangItemContainer): void {
     let items = targetItems.getItems();
 
     items.forEach((item) => {
+      item.getItemObj().rotation = 0;
+      item.getItemObj().scale.x = this.scale;
+      item.getItemObj().scale.y = this.scale;
+      item.getItemObj().alpha = 1;
       item.getItemObj().texture = PIXI.loader.resources['e'].texture;
       item.setItemType('e');
     });

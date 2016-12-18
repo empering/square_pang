@@ -4,7 +4,7 @@ import '../../vend/pixi.js';
 import { PangItem } from './pang.item';
 import { PangItemContainer } from './pang.item-container';
 import { PangUtil } from './pang.util';
-import { ROW, ROW_SIZE, COL, COL_SIZE, ITEM_ARRAY } from './pang.config';
+import { ROW, COL } from './pang.config';
 import { Observable } from 'rxjs';
 
 @Component({
@@ -20,6 +20,7 @@ export class PangComponent implements OnInit {
     private stage: PIXI.Container;
     private con: PIXI.Container;
 
+    private device = 'p';
     private gameItems = new PangItemContainer();
     private selectedItems = new PangItemContainer();
     private selectMarks = new PangItemContainer();
@@ -27,6 +28,13 @@ export class PangComponent implements OnInit {
     private matchItemsY = new PangItemContainer();
 
     private util = new PangUtil();
+
+    private score = 0;
+    private totalTime = 60.0;
+    private remain = '0';
+    private startTime = 0;
+    private plusTime = 0;
+    private gameStatus = true;
 
     constructor() {
         this.stage = new PIXI.Container();
@@ -37,6 +45,12 @@ export class PangComponent implements OnInit {
     }
 
     ngOnInit(): void {
+        if (window.outerWidth < 640) {
+            this.device = 'm';
+            this.util.setDevice(this.device);
+            this.renderer = PIXI.autoDetectRenderer(320, 320);
+        }
+
         document.body.appendChild(this.renderer.view);
 
         PIXI.loader
@@ -49,6 +63,7 @@ export class PangComponent implements OnInit {
             .add('e', '/assets/pang/element_blank_square.png')
             .load((loader, resources) => {
                 this.setGameItems();
+                this.startTime = Date.now();
                 this.render();
             });
     }
@@ -59,32 +74,72 @@ export class PangComponent implements OnInit {
 
     reset(): void {
         this.gameItems.destroy();
-
         this.setGameItems();
-        this.render();
+
+        this.startTime = Date.now();
+        // this.render();
     }
 
     render(): void {
-        this.gameItems.setFullFill();
+        // this.gameItems.setFullFill();
         this.renderer.render(this.stage);
+        this.removeAni();
+
+        let remain = this.totalTime - (Date.now() - this.startTime) / 1000;
+        if (remain > 0) {
+            this.remain = remain.toFixed(3);
+        } else {
+            this.gameStatus = false;
+            this.remain = 'finished...';
+        }
+
+        requestAnimationFrame(() => this.render());
+    }
+
+    removeAni(): void {
+        this.matchItemsX.getItems().forEach((item) => {
+            item.getItemObj().rotation += 0.3;
+            item.getItemObj().scale.x -= 0.03;
+            item.getItemObj().scale.y -= 0.03;
+            item.getItemObj().alpha -= 0.01;
+        });
+        this.matchItemsY.getItems().forEach((item) => {
+            item.getItemObj().rotation += 0.3;
+            item.getItemObj().scale.x -= 0.03;
+            item.getItemObj().scale.y -= 0.03;
+            item.getItemObj().alpha -= 0.01;
+        });
     }
 
     matchRemove(): void {
+        if (!this.gameStatus) {
+            return;
+        }
+
+        let matchCnt = 0;
         this.matchItemsX = this.util.getMatchAllItemsX(this.gameItems);
-        // remove 대신 blank 이미지로 교체하는 형태로 변경
-        // this.gameItems.removeItemsByContainer(this.matchItemsX);
-        this.util.setEmpty(this.matchItemsX);
-        // fill function
-        this.gameItems.fillItems(this.matchItemsX);
-        this.matchItemsX.clear();
+        matchCnt += this.matchItemsX.size();
 
         this.matchItemsY = this.util.getMatchAllItemsY(this.gameItems);
-        this.util.setEmpty(this.matchItemsY);
-        // fill function
-        this.gameItems.fillItems(this.matchItemsY);
-        this.matchItemsY.clear();
+        matchCnt += this.matchItemsY.size();
 
-        this.render();
+        this.score += matchCnt * 50;
+
+        if (matchCnt > 0) {
+            setTimeout(() => {
+                console.log(this.matchItemsX.size());
+                this.util.setEmpty(this.matchItemsX);
+                this.gameItems.fillItems(this.matchItemsX);
+                this.matchItemsX.clear();
+
+                this.util.setEmpty(this.matchItemsY);
+                this.gameItems.fillItems(this.matchItemsY);
+                this.matchItemsY.clear();
+
+                this.gameItems.setFullFill();
+                this.matchRemove();
+            }, 1000);
+        }
     }
 
     setGameItems(): void {
@@ -95,8 +150,8 @@ export class PangComponent implements OnInit {
         }
 
         this.gameItems.sort();
-        this.con.position.x = 4;
-        this.con.position.y = 4;
+        this.con.position.x = 20 * (this.device === 'p' ? 2 : 1);
+        this.con.position.y = 20 * (this.device === 'p' ? 2 : 1);
     }
 
     addItem(pointX: number, pointY: number): void {
@@ -107,13 +162,16 @@ export class PangComponent implements OnInit {
         itemObj.interactive = true;
 
         itemObj.on('mousedown', () => this.clickItem(pointX, pointY))
-                .on('touchstart', () => this.clickItem(pointX, pointY));
+            .on('touchstart', () => this.clickItem(pointX, pointY));
 
         this.con.addChild(itemObj);
         this.gameItems.addItem(item);
     }
 
     clickItem(pointX: number, pointY: number): void {
+        if (!this.gameStatus) {
+            return;
+        }
         // 선택된 아이템이 2개이상일 경우
         if (this.selectedItems.size() > 1) {
             return;
@@ -132,7 +190,7 @@ export class PangComponent implements OnInit {
             }
             this.clearSelectItemAll();
         }
-        this.render();
+        // this.render();
     }
 
     swapItem(): void {
