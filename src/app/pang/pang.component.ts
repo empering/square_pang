@@ -4,7 +4,7 @@ import '../../vend/pixi.js';
 import { PangItem } from './pang.item';
 import { PangItemContainer } from './pang.item-container';
 import { PangUtil } from './pang.util';
-import { ROW, COL } from './pang.config';
+import { ROW, COL, SCORE_LABLE, TIME_LABLE, TEXT_STYLE } from './pang.config';
 import { Observable } from 'rxjs';
 
 @Component({
@@ -16,9 +16,11 @@ import { Observable } from 'rxjs';
 export class PangComponent implements OnInit {
     feeds$: Observable<{}>;
 
-    private renderer: any;
+    // private renderer: PIXI.CanvasRenderer || PIXI.WebGLRenderer;
+    private renderer: PIXI.WebGLRenderer;
     private stage: PIXI.Container;
     private con: PIXI.Container;
+    private scoreCon: PIXI.Container;
 
     private device = 'p';
     private gameItems = new PangItemContainer();
@@ -26,6 +28,9 @@ export class PangComponent implements OnInit {
     private selectMarks = new PangItemContainer();
     private matchItemsX = new PangItemContainer();
     private matchItemsY = new PangItemContainer();
+
+    private scoreText: PIXI.Text;
+    private timeText: PIXI.Text;
 
     private util = new PangUtil();
 
@@ -39,19 +44,43 @@ export class PangComponent implements OnInit {
     constructor() {
         this.stage = new PIXI.Container();
         this.con = new PIXI.Container();
-        this.renderer = PIXI.autoDetectRenderer(640, 640);
+        this.scoreCon = new PIXI.Container();
+        // this.renderer = PIXI.autoDetectRenderer(640, 700);
+        this.renderer = new PIXI.WebGLRenderer(640, 700);
 
         this.stage.addChild(this.con);
+        this.stage.addChild(this.scoreCon);
     }
 
     ngOnInit(): void {
         if (window.outerWidth < 640) {
             this.device = 'm';
             this.util.setDevice(this.device);
-            this.renderer = PIXI.autoDetectRenderer(320, 320);
+            // this.renderer = PIXI.autoDetectRenderer(320, 350);
+            this.renderer = new PIXI.WebGLRenderer(320, 355);
+            this.scoreCon.y = 320;
+
+            TEXT_STYLE.fontSize = '15px';
         }
 
-        document.body.appendChild(this.renderer.view);
+        document.getElementById('canvas').appendChild(this.renderer.view);
+
+        this.scoreCon.y = this.renderer.width + 10;
+
+        let scoreLabel = new PIXI.Text(SCORE_LABLE, TEXT_STYLE);
+        this.scoreCon.addChild(scoreLabel);
+
+        this.scoreText = new PIXI.Text('0', TEXT_STYLE);
+        this.scoreText.x = 100 / (this.device === 'm' ? 2 : 1);
+        this.scoreCon.addChild(this.scoreText);
+
+        let timeLabel = new PIXI.Text(TIME_LABLE, TEXT_STYLE);
+        timeLabel.x = this.renderer.width / 2;
+        this.scoreCon.addChild(timeLabel);
+
+        this.timeText = new PIXI.Text('60.000', TEXT_STYLE);
+        this.timeText.x = (this.renderer.width / 2) + 150 / (this.device === 'm' ? 2 : 1);
+        this.scoreCon.addChild(this.timeText);
 
         PIXI.loader
             .add('b', '/assets/pang/element_blue_square.png')
@@ -80,18 +109,24 @@ export class PangComponent implements OnInit {
         // this.render();
     }
 
-    render(): void {
-        // this.gameItems.setFullFill();
-        this.renderer.render(this.stage);
-        this.removeAni();
+    showScore(): void {
+        this.scoreText.text = this.score.toString();
 
         let remain = this.totalTime - (Date.now() - this.startTime) / 1000;
         if (remain > 0) {
             this.remain = remain.toFixed(3);
         } else {
             this.gameStatus = false;
-            this.remain = 'finished...';
+            this.remain = 'finished!!';
         }
+        this.timeText.text = this.remain;
+    }
+
+    render(): void {
+        // this.gameItems.setFullFill();
+        this.renderer.render(this.stage);
+        this.removeAni();
+        this.showScore();
 
         requestAnimationFrame(() => this.render());
     }
@@ -127,7 +162,6 @@ export class PangComponent implements OnInit {
 
         if (matchCnt > 0) {
             setTimeout(() => {
-                console.log(this.matchItemsX.size());
                 this.util.setEmpty(this.matchItemsX);
                 this.gameItems.fillItems(this.matchItemsX);
                 this.matchItemsX.clear();
