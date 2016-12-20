@@ -45,8 +45,6 @@ export class PangComponent implements OnInit {
         this.stage = new PIXI.Container();
         this.con = new PIXI.Container();
         this.scoreCon = new PIXI.Container();
-        // this.renderer = PIXI.autoDetectRenderer(640, 700);
-        this.renderer = new PIXI.WebGLRenderer(640, 700);
 
         this.stage.addChild(this.con);
         this.stage.addChild(this.scoreCon);
@@ -61,6 +59,9 @@ export class PangComponent implements OnInit {
             this.scoreCon.y = 320;
 
             TEXT_STYLE.fontSize = '15px';
+        } else {
+            // this.renderer = PIXI.autoDetectRenderer(640, 700);
+            this.renderer = new PIXI.WebGLRenderer(640, 700);
         }
 
         document.getElementById('canvas').appendChild(this.renderer.view);
