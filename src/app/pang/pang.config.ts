@@ -21,5 +21,8 @@ export const TEXT_STYLE = {
   wordWrapWidth: 440
 };
 
+export const START_TEXT = '시작하기';
+export const RESTART_TEXT = '다시하기';
+export const TIMEUP_TEXT = '시간종료!!';
 export const SCORE_LABLE = '점수 : ';
 export const TIME_LABLE = '남은시간 : ';

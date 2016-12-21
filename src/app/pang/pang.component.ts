@@ -4,7 +4,7 @@ import '../../vend/pixi.js';
 import { PangItem } from './pang.item';
 import { PangItemContainer } from './pang.item-container';
 import { PangUtil } from './pang.util';
-import { ROW, COL, SCORE_LABLE, TIME_LABLE, TEXT_STYLE } from './pang.config';
+import { ROW, COL, SCORE_LABLE, TIME_LABLE, TEXT_STYLE, START_TEXT, RESTART_TEXT, TIMEUP_TEXT } from './pang.config';
 import { Observable } from 'rxjs';
 
 @Component({
@@ -16,9 +16,11 @@ import { Observable } from 'rxjs';
 export class PangComponent implements OnInit {
     feeds$: Observable<{}>;
 
-    // private renderer: PIXI.CanvasRenderer || PIXI.WebGLRenderer;
     private renderer: PIXI.WebGLRenderer;
     private stage: PIXI.Container;
+
+    private startCon: PIXI.Container;
+    private restartCon: PIXI.Container;
     private con: PIXI.Container;
     private scoreCon: PIXI.Container;
 
@@ -39,28 +41,33 @@ export class PangComponent implements OnInit {
     private remain = '0';
     private startTime = 0;
     private plusTime = 0;
-    private gameStatus = true;
+
+    private gameStatus = false;
+    private removeStatus = false;
 
     constructor() {
         this.stage = new PIXI.Container();
+
+        this.startCon = new PIXI.Container();
+        this.restartCon = new PIXI.Container();
         this.con = new PIXI.Container();
         this.scoreCon = new PIXI.Container();
 
         this.stage.addChild(this.con);
         this.stage.addChild(this.scoreCon);
+        this.stage.addChild(this.startCon);
+        this.stage.addChild(this.restartCon);
     }
 
     ngOnInit(): void {
         if (window.outerWidth < 640) {
             this.device = 'm';
             this.util.setDevice(this.device);
-            // this.renderer = PIXI.autoDetectRenderer(320, 350);
             this.renderer = new PIXI.WebGLRenderer(320, 355);
             this.scoreCon.y = 320;
 
             TEXT_STYLE.fontSize = '15px';
         } else {
-            // this.renderer = PIXI.autoDetectRenderer(640, 700);
             this.renderer = new PIXI.WebGLRenderer(640, 700);
         }
 
@@ -83,6 +90,43 @@ export class PangComponent implements OnInit {
         this.timeText.x = (this.renderer.width / 2) + 150 / (this.device === 'm' ? 2 : 1);
         this.scoreCon.addChild(this.timeText);
 
+        let startText = new PIXI.Text(START_TEXT, TEXT_STYLE);
+        startText.style.fontSize = '30px';
+        startText.anchor.x = 0.5;
+        startText.anchor.y = 0.5;
+
+        startText.buttonMode = true;
+        startText.interactive = true;
+
+        startText.on('mousedown', () => this.start()).on('touchstart', () => this.start());
+
+        this.startCon.addChild(startText);
+        this.startCon.x = (this.renderer.width / 2);
+        this.startCon.y = (this.renderer.height / 2) - 50;
+
+        let restartText = new PIXI.Text(RESTART_TEXT, TEXT_STYLE);
+        restartText.style.fontSize = '30px';
+        restartText.position.y = 45;
+        restartText.anchor.x = 0.5;
+        restartText.anchor.y = 0.5;
+
+        restartText.buttonMode = true;
+        restartText.interactive = true;
+
+        restartText.on('mousedown', () => this.reset()).on('touchstart', () => this.reset());
+
+        let timeupText = new PIXI.Text(TIMEUP_TEXT, TEXT_STYLE);
+        timeupText.style.fontSize = '30px';
+        timeupText.anchor.x = 0.5;
+        timeupText.anchor.y = 0.5;
+
+        this.restartCon.addChild(timeupText);
+        this.restartCon.addChild(restartText);
+        this.restartCon.x = (this.renderer.width / 2);
+        this.restartCon.y = (this.renderer.height / 2) - 60;
+
+        this.restartCon.visible = false;
+
         PIXI.loader
             .add('b', '/assets/pang/element_blue_square.png')
             .add('g', '/assets/pang/element_green_square.png')
@@ -93,12 +137,15 @@ export class PangComponent implements OnInit {
             .add('e', '/assets/pang/element_blank_square.png')
             .load((loader, resources) => {
                 this.setGameItems();
-                this.startTime = Date.now();
                 this.render();
             });
     }
 
     start(): void {
+        this.startTime = Date.now();
+        this.gameStatus = true;
+        this.startCon.visible = false;
+
         this.matchRemove();
     }
 
@@ -106,8 +153,13 @@ export class PangComponent implements OnInit {
         this.gameItems.destroy();
         this.setGameItems();
 
+        this.score = 0;
+
         this.startTime = Date.now();
-        // this.render();
+        this.gameStatus = true;
+        this.restartCon.visible = false;
+
+        this.matchRemove();
     }
 
     showScore(): void {
@@ -118,16 +170,19 @@ export class PangComponent implements OnInit {
             this.remain = remain.toFixed(3);
         } else {
             this.gameStatus = false;
+            this.restartCon.visible = true;
+
             this.remain = 'finished!!';
         }
         this.timeText.text = this.remain;
     }
 
     render(): void {
-        // this.gameItems.setFullFill();
         this.renderer.render(this.stage);
-        this.removeAni();
-        this.showScore();
+        if (this.gameStatus) {
+            this.removeAni();
+            this.showScore();
+        }
 
         requestAnimationFrame(() => this.render());
     }
@@ -160,8 +215,12 @@ export class PangComponent implements OnInit {
         matchCnt += this.matchItemsY.size();
 
         this.score += matchCnt * 50;
+        if (matchCnt > 3) {
+            this.score += matchCnt * 50;
+        }
 
         if (matchCnt > 0) {
+            this.removeStatus = true;
             setTimeout(() => {
                 this.util.setEmpty(this.matchItemsX);
                 this.gameItems.fillItems(this.matchItemsX);
@@ -173,6 +232,8 @@ export class PangComponent implements OnInit {
 
                 this.gameItems.setFullFill();
                 this.matchRemove();
+
+                this.removeStatus = false;
             }, 1000);
         }
     }
@@ -204,7 +265,7 @@ export class PangComponent implements OnInit {
     }
 
     clickItem(pointX: number, pointY: number): void {
-        if (!this.gameStatus) {
+        if (!this.gameStatus || this.removeStatus) {
             return;
         }
         // 선택된 아이템이 2개이상일 경우
@@ -225,7 +286,6 @@ export class PangComponent implements OnInit {
             }
             this.clearSelectItemAll();
         }
-        // this.render();
     }
 
     swapItem(): void {
