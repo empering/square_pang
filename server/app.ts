@@ -3,6 +3,7 @@ import { json, urlencoded } from 'body-parser';
 import * as path from 'path';
 import * as cors from 'cors';
 import * as compression from 'compression';
+import * as mongoose from 'mongoose';
 
 import { loginRouter } from './routes/login';
 import { protectedRouter } from './routes/protected';
@@ -38,6 +39,9 @@ app.use(function(req: express.Request, res: express.Response, next) {
   let err = new Error('Not Found');
   next(err);
 });
+
+console.log(process.env.MONGODB_URI);
+// mongoose.connect(process.env.MONGODB_URI || 'mongodb://heroku_k6x59fzc:heroku_k6x59fzc@ds141108.mlab.com:41108/heroku_k6x59fzc');
 
 // production error handler
 // no stacktrace leaked to user
